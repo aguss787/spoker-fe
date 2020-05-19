@@ -15,5 +15,5 @@ initialJoinModel =
 initialJoinModelWithRoomID : String -> JoinModel
 initialJoinModelWithRoomID roomID =
     { roomID = roomID
-    , role = "observer"
+    , role = "participant"
     }
