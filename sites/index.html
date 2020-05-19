@@ -1,0 +1,176 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="/elm.js"></script>
+    <script src="/config.js"></script>
+    <title></title>
+</head>
+<body>
+<script>
+    var init_token = localStorage.getItem('token');
+    var init_roomID = localStorage.getItem('roomID');
+    var init_role = localStorage.getItem('role');
+
+    var app = Elm["Main"].init({
+        flags: {
+            token: init_token,
+            roomID: init_roomID,
+            role: init_role,
+            ...config,
+        }
+    });
+
+    app.ports.setKey.subscribe(function ({key, value}) {
+        localStorage.setItem(key, value)
+    })
+
+    app.ports.removeKey.subscribe(function (key) {
+        localStorage.removeItem(key)
+    })
+
+    class websocketHandler {
+        reset() {
+            this.socket.removeEventListener("close", this.retry)
+            this.socket.close()
+            this.socket = null
+        }
+
+        init(baseUrl, token, roomID, role, callback) {
+            if (this.socket) {
+                this.reset()
+            }
+
+            this.retry = () => {
+                this.init(this.baseUrl, this.token, this.roomID, this.role)
+            }
+
+            this.baseUrl = baseUrl
+            this.token = token
+            this.roomID = roomID
+            this.role = role
+
+            this.socket = new WebSocket(baseUrl + "/" + roomID)
+
+            this.socket.addEventListener("message", (event) => {
+                let message = JSON.parse(event.data)
+                if (message.type === "error") {
+                    message.data.type = message.data.type ? message.data.type : "other"
+
+                    app.ports.roomError.send([message.data.type, message.data.message])
+
+                    this.reset()
+                } else if (message.type === "init" && message.data === "ack") {
+                    app.ports.initialized.send(callback)
+                } else if (message.type === "meta") {
+                    app.ports.meta.send({
+                        title: message.data.title,
+                        description: message.data.description
+                    })
+                } else if (message.type === "vote") {
+                    app.ports.vote.send({
+                        observers: message.data.observers,
+                        participants: message.data.participants,
+                        votes: Object.entries(message.data.votes)
+                    })
+                }
+            })
+
+            this.socket.addEventListener("close", this.retry)
+
+            this.socket.addEventListener("open", () => {
+                this.socket.send(
+                    JSON.stringify({
+                        type: "init",
+                        data: {
+                            role: role,
+                            token: token
+                        },
+                    })
+                )
+            })
+        }
+
+
+        submit_meta(title, description) {
+            if (!this.socket) {
+                return
+            }
+
+            this.socket.send(
+                JSON.stringify({
+                    type: "update_meta",
+                    data: {
+                        title: title,
+                        description: description
+                    },
+                })
+            )
+        }
+
+        submit_vote(value) {
+            if (!this.socket) {
+                return
+            }
+
+
+            this.socket.send(
+                JSON.stringify({
+                    type: "vote",
+                    data: value,
+                })
+            )
+        }
+
+        clear_vote(event) {
+            if (!this.socket) {
+                return
+            }
+
+            this.socket.send(
+                JSON.stringify({
+                    type: "clear_vote",
+                })
+            )
+        }
+
+        kick(username) {
+            this.socket.send(
+                JSON.stringify({
+                    type: "kick",
+                    data: username,
+                })
+            )
+        }
+    }
+
+    var currentWebsocketHandler = new(websocketHandler)
+
+    app.ports.openConnection.subscribe(function ({baseUrl, token, roomID, role, callback}) {
+        currentWebsocketHandler.init(baseUrl, token, roomID, role, callback)
+    })
+
+    app.ports.openConnectionIfNecessary.subscribe(function ({baseUrl, token, roomID, role, callback}) {
+        if (!currentWebsocketHandler.socket) {
+            currentWebsocketHandler.init(baseUrl, token, roomID, role, callback)
+        }
+    })
+
+    app.ports.sendMeta.subscribe(function ({title, description}) {
+        currentWebsocketHandler.submit_meta(title, description)
+    })
+
+    app.ports.castVote.subscribe(function (value) {
+        currentWebsocketHandler.submit_vote(value)
+    })
+
+    app.ports.clearVote.subscribe(function (value) {
+        currentWebsocketHandler.clear_vote(value)
+    })
+
+    app.ports.kick.subscribe(function (value) {
+        currentWebsocketHandler.kick(value)
+    })
+</script>
+</body>
+</html>
