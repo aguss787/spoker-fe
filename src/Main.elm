@@ -7,7 +7,7 @@ import Browser.Navigation as Navigation
 import Join.Model exposing (initialJoinModel)
 import Message exposing (Message(..))
 import Model exposing (Flag, Model, Page(..))
-import Reservation.Model exposing (initialReservationModel)
+import Reservation.Model exposing (initialReservationModel, initialSelectRoomModel)
 import Room.Message exposing (RoomMessage(..))
 import Room.Model exposing (initialRoomModel)
 import Room.Ports exposing (initialized, meta, roomError, vote)
@@ -41,6 +41,7 @@ init flag url key =
             , errorMessage = Nothing
             , ok = True
             , reservation = initialReservationModel
+            , selectRoom = initialSelectRoomModel
             , join = initialJoinModel
             , room = initialRoomModel flag.roomID flag.role
             }

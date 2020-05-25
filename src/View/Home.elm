@@ -8,14 +8,15 @@ import Bootstrap.Form as Form
 import Bootstrap.Form.Input as Input
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
+import Css exposing (px)
 import Html.Attributes exposing (for)
-import Html.Styled exposing (Html, fromUnstyled, span, text, toUnstyled)
-import Html.Styled.Attributes exposing (class)
+import Html.Styled exposing (Html, div, fromUnstyled, span, text, toUnstyled)
+import Html.Styled.Attributes exposing (class, css)
 import Message exposing (Message(..))
 import Model exposing (Model)
 import Reservation.Message exposing (ReservationMessage(..))
 import Routing.Message as Routing
-import View.Style exposing (StyledDocument, centered)
+import View.Style exposing (StyledDocument)
 
 
 view : Model -> StyledDocument Message
@@ -24,41 +25,115 @@ view model =
     , body =
         [ fromUnstyled <|
             Grid.container []
-                [ Grid.row []
-                    [ Grid.col [] [ toUnstyled <| reserveOrLoginCard model ]
-                    , Grid.col [] [ toUnstyled <| whyCard ]
+                [ Grid.row [] <|
+                    case model.token of
+                        Nothing ->
+                            [ Grid.col [] [ toUnstyled <| loginCard model ]
+                            ]
+
+                        _ ->
+                            [ Grid.col [] [ toUnstyled <| reserveCard model ]
+                            , Grid.col [] [ toUnstyled <| joinCard model ]
+                            ]
+                , Grid.row []
+                    [ Grid.col [] [ toUnstyled <| whyCard ]
                     ]
                 ]
         ]
     }
 
 
-reserveOrLoginCard : Model -> Html Message
-reserveOrLoginCard model =
-    fromUnstyled <|
-        (Card.config []
-            |> Card.block []
-                [ Block.titleH4 [] [ toUnstyled <| text "Reserve a room now!" ]
-                , Block.text []
-                    [ toUnstyled <|
-                        case model.token of
-                            Nothing ->
-                                fromUnstyled <|
-                                    Button.button
-                                        [ Button.primary
-                                        , Button.onClick <|
-                                            RoutingMessage <|
-                                                Routing.ExternalRequest <|
-                                                    Auth.Utils.getAuthUrl model.flag
-                                        ]
-                                        [ toUnstyled <| text "Login with agus.dev" ]
+loginCard : Model -> Html Message
+loginCard model =
+    cardWrapper <|
+        fromUnstyled <|
+            (Card.config []
+                |> Card.block []
+                    [ Block.titleH4 [] [ toUnstyled <| text "Start your journey here!" ]
+                    , Block.text []
+                        [ toUnstyled <|
+                            fromUnstyled <|
+                                Button.button
+                                    [ Button.primary
+                                    , Button.onClick <|
+                                        RoutingMessage <|
+                                            Routing.ExternalRequest <|
+                                                Auth.Utils.getAuthUrl model.flag
+                                    ]
+                                    [ toUnstyled <| text "Login with agus.dev" ]
+                        ]
+                    ]
+                |> Card.view
+            )
 
-                            Just _ ->
-                                reservationForm model
+
+cardWrapper : Html Message -> Html Message
+cardWrapper html =
+    div [ css [ Css.paddingBottom <| px 10 ] ] [ html ]
+
+
+joinCard : Model -> Html Message
+joinCard model =
+    cardWrapper <|
+        fromUnstyled <|
+            (Card.config []
+                |> Card.block []
+                    [ Block.titleH4 [] [ toUnstyled <| text "Or, simply join your friend" ]
+                    , Block.text []
+                        [ toUnstyled <| joinForm model
+                        ]
+                    ]
+                |> Card.view
+            )
+
+
+joinForm : Model -> Html Message
+joinForm model =
+    fromUnstyled <|
+        Grid.container []
+            [ Form.form []
+                [ Form.label [ for "join_room_id" ] [ toUnstyled <| text "Room ID" ]
+                , Form.row []
+                    [ Form.col []
+                        [ Input.text
+                            [ Input.id "join_room_id"
+                            , Input.onInput <| ReservationMessage << SetSelectRoomID
+                            , Input.value model.selectRoom.roomID
+                            , if model.selectRoom.validation == Nothing then
+                                Input.success
+
+                              else
+                                Input.danger
+                            ]
+                        , Form.invalidFeedback [] [ toUnstyled <| text <| Maybe.withDefault "" model.selectRoom.validation ]
+                        ]
+                    ]
+                , Form.row []
+                    [ Form.col []
+                        [ Button.submitButton
+                            [ Button.primary
+                            , Button.onClick <| ReservationMessage ValidateAndJoin
+                            ]
+                            [ toUnstyled <| text "Join party" ]
+                        ]
                     ]
                 ]
-            |> Card.view
-        )
+            ]
+
+
+reserveCard : Model -> Html Message
+reserveCard model =
+    cardWrapper <|
+        fromUnstyled <|
+            (Card.config []
+                |> Card.block []
+                    [ Block.titleH4 [] [ toUnstyled <| text "Reserve a room now!" ]
+                    , Block.text []
+                        [ toUnstyled <| reservationForm model
+                        ]
+                    ]
+                |> Card.view
+            )
 
 
 reservationForm : Model -> Html Message
@@ -81,7 +156,7 @@ reservationForm model =
                             ]
                         , Form.invalidFeedback [] [ toUnstyled <| text <| Maybe.withDefault "" model.reservation.validation ]
                         ]
-                    , Form.col [ Col.sm2 ]
+                    , Form.col [ Col.sm3 ]
                         [ Button.resetButton
                             [ Button.onClick <| ReservationMessage RandomizeRoomID
                             ]
@@ -103,11 +178,12 @@ reservationForm model =
 
 whyCard : Html Message
 whyCard =
-    fromUnstyled <|
-        (Card.config []
-            |> Card.block []
-                [ Block.titleH4 [] [ toUnstyled <| text "Why I made this?" ]
-                , Block.text [] [ toUnstyled <| text "Because of scrumpoker.online" ]
-                ]
-            |> Card.view
-        )
+    cardWrapper <|
+        fromUnstyled <|
+            (Card.config []
+                |> Card.block []
+                    [ Block.titleH4 [] [ toUnstyled <| text "Why I made this?" ]
+                    , Block.text [] [ toUnstyled <| text "Because of scrumpoker.online" ]
+                    ]
+                |> Card.view
+            )

@@ -9,3 +9,5 @@ type ReservationMessage
     | RandomizeRoomIDDone String
     | ValidateAndSend
     | ReservationDone (Result Http.Error ())
+    | SetSelectRoomID String
+    | ValidateAndJoin

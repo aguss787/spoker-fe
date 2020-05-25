@@ -2,7 +2,6 @@ module Auth.Command exposing (..)
 
 import Auth.Message exposing (AuthMessage(..))
 import Http
-import Json.Decode
 import Json.Encode
 import Message exposing (Message(..))
 

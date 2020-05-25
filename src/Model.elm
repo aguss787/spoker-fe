@@ -3,7 +3,7 @@ module Model exposing (..)
 import Bootstrap.Navbar as Navbar
 import Browser.Navigation as Navigation
 import Join.Model exposing (JoinModel)
-import Reservation.Model exposing (ReservationModel)
+import Reservation.Model exposing (ReservationModel, SelectRoomModel)
 import Room.Model exposing (RoomModel)
 
 
@@ -37,6 +37,7 @@ type alias Model =
     , errorMessage : Maybe String
     , ok : Bool
     , reservation : ReservationModel
+    , selectRoom : SelectRoomModel
     , join : JoinModel
     , room : RoomModel
     }

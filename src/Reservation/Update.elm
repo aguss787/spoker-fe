@@ -14,6 +14,9 @@ update message model =
     let
         reservationModel =
             model.reservation
+
+        selectRoomModel =
+            model.selectRoom
     in
     case message of
         SetRoomID value ->
@@ -89,6 +92,38 @@ update message model =
 
                         _ ->
                             handleRequestError error ( model, Cmd.none )
+
+        SetSelectRoomID value ->
+            ( { model
+                | selectRoom =
+                    { selectRoomModel
+                        | roomID = value
+                        , validation =
+                            case isValid value of
+                                Valid _ ->
+                                    Nothing
+
+                                Error reason ->
+                                    Just reason
+                    }
+              }
+            , Cmd.none
+            )
+
+        ValidateAndJoin ->
+            case isValid selectRoomModel.roomID of
+                Valid roomID ->
+                    ( model, Navigation.pushUrl model.navKey <| "/join/" ++ roomID )
+
+                Error reason ->
+                    ( { model
+                        | selectRoom =
+                            { selectRoomModel
+                                | validation = Just reason
+                            }
+                      }
+                    , Cmd.none
+                    )
 
 
 isValid : String -> ValidationForm String
