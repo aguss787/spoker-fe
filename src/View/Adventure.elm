@@ -3,13 +3,11 @@ module View.Adventure exposing (..)
 import Bootstrap.Button as Button
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
-import Bootstrap.Form as Form
-import Bootstrap.Form.Input as Input
+import Bootstrap.Form.Checkbox as Checkbox
 import Bootstrap.Grid as Grid
-import Bootstrap.Grid.Col as Col
 import Css exposing (pct, px)
 import Dict
-import Html.Styled exposing (Html, div, fromUnstyled, h3, h5, input, label, span, text, toUnstyled)
+import Html.Styled exposing (Html, div, fromUnstyled, h5, input, label, span, text, toUnstyled)
 import Html.Styled.Attributes exposing (class, css, type_, value)
 import Html.Styled.Events exposing (onClick, onInput)
 import Message exposing (Message(..))
@@ -44,14 +42,46 @@ renderVote model =
                                     [ div [ css [ Css.paddingBottom <| px 10 ] ] [ renderVotingBox ] ]
 
                                   else
-                                    []
+                                    [ div [ css [ Css.paddingBottom <| px 10 ] ] [ renderConfig model ] ]
                                 , [ div [ css [ Css.paddingBottom <| px 10 ] ] [ renderControlBox model ]
                                   ]
                                 ]
                     ]
-                , Grid.col [] [ toUnstyled <| renderCurrentVote model ]
+                , Grid.col [] <|
+                    List.concat
+                        [ [ toUnstyled <| div [ css [ Css.paddingBottom <| px 10 ] ] [ renderCurrentVote model ]
+                          ]
+                        , if List.length model.room.observers == 0 then
+                            [ toUnstyled <| div [ css [ Css.paddingBottom <| px 10 ] ] [ renderConfig model ] ]
+
+                          else
+                            []
+                        ]
                 ]
             ]
+
+
+renderConfig : Model -> Html Message
+renderConfig model =
+    fromUnstyled <|
+        (Card.config []
+            |> Card.headerH4 [] [ toUnstyled <| text "Config" ]
+            |> Card.block []
+                [ Block.custom
+                    (toUnstyled <|
+                        div []
+                            [ fromUnstyled <|
+                                Checkbox.checkbox
+                                    [ Checkbox.id "freeze_after_vote"
+                                    , Checkbox.onCheck (RoomMessage << SetFreezeAfterVote)
+                                    , Checkbox.checked model.room.config.freezeAfterVote
+                                    ]
+                                    "Freeze after vote"
+                            ]
+                    )
+                ]
+            |> Card.view
+        )
 
 
 renderControlBox : Model -> Html Message

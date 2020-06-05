@@ -73,6 +73,10 @@
                         participants: message.data.participants,
                         votes: Object.entries(message.data.votes)
                     })
+                } else if (message.type === "config") {
+                    app.ports.config.send({
+                        freezeAfterVote: message.data.freeze_after_vote
+                    })
                 }
             })
 
@@ -142,6 +146,21 @@
                 })
             )
         }
+
+        set_config(config) {
+            if (!this.socket) {
+                return
+            }
+
+            this.socket.send(
+                JSON.stringify({
+                    type: "set_config",
+                    data: {
+                        "freeze_after_vote": config.freezeAfterVote,
+                    },
+                })
+            )
+        }
     }
 
     var currentWebsocketHandler = new(websocketHandler)
@@ -170,6 +189,10 @@
 
     app.ports.kick.subscribe(function (value) {
         currentWebsocketHandler.kick(value)
+    })
+
+    app.ports.setConfig.subscribe(function (value) {
+        currentWebsocketHandler.set_config(value)
     })
 </script>
 </body>

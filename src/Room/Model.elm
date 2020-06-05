@@ -1,6 +1,10 @@
 module Room.Model exposing (..)
 
 
+type alias RoomConfig =
+    { freezeAfterVote : Bool }
+
+
 type alias RoomModel =
     { roomID : Maybe String
     , role : Maybe String
@@ -10,6 +14,7 @@ type alias RoomModel =
     , observers : List String
     , participants : List String
     , votes : List { username : String, value : String }
+    , config : RoomConfig
     }
 
 
@@ -23,4 +28,5 @@ initialRoomModel roomID role =
     , observers = []
     , participants = []
     , votes = []
+    , config = { freezeAfterVote = True }
     }

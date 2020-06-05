@@ -10,7 +10,7 @@ import Model exposing (Flag, Model, Page(..))
 import Reservation.Model exposing (initialReservationModel, initialSelectRoomModel)
 import Room.Message exposing (RoomMessage(..))
 import Room.Model exposing (initialRoomModel)
-import Room.Ports exposing (initialized, meta, roomError, vote)
+import Room.Ports exposing (config, initialized, meta, roomError, vote)
 import Routing.Message
 import Routing.Page exposing (urlToPage)
 import Update exposing (update)
@@ -107,6 +107,7 @@ subscriptions model =
         , initialized (RoomMessage << Initialized)
         , vote (RoomMessage << Vote)
         , meta (RoomMessage << Meta)
+        , config (RoomMessage << Config)
         ]
 
 

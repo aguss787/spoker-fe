@@ -6,7 +6,7 @@ import Model exposing (Model)
 import Ports exposing (removeRoomInfo)
 import Room.Message exposing (RoomMessage(..))
 import Room.Model exposing (initialRoomModel)
-import Room.Ports exposing (castVote, clearVote, kick, sendMeta)
+import Room.Ports exposing (castVote, clearVote, kick, sendMeta, setConfig)
 import Utils.Update exposing (reportError)
 
 
@@ -15,6 +15,9 @@ update message model =
     let
         roomModel =
             model.room
+
+        configModel =
+            roomModel.config
     in
     case message of
         ErrorMessage ( errorType, errorMessage ) ->
@@ -103,3 +106,32 @@ update message model =
 
         Kick username ->
             ( model, kick username )
+
+        SetConfig roomConfig ->
+            ( model, setConfig roomConfig )
+
+        Config config ->
+            ( { model
+                | room =
+                    { roomModel
+                        | config = config
+                    }
+              }
+            , Cmd.none
+            )
+
+        SetFreezeAfterVote value ->
+            ( { model
+                | room =
+                    { roomModel
+                        | config =
+                            { configModel
+                                | freezeAfterVote = value
+                            }
+                    }
+              }
+            , setConfig
+                { configModel
+                    | freezeAfterVote = value
+                }
+            )

@@ -1,5 +1,7 @@
 port module Room.Ports exposing (..)
 
+import Room.Model exposing (RoomConfig)
+
 
 port openConnection : { baseUrl : String, token : Maybe String, roomID : String, role : String, callback : Maybe String } -> Cmd msg
 
@@ -19,6 +21,9 @@ port vote : ({ observers : List String, participants : List String, votes : List
 port meta : ({ title : String, description : String } -> msg) -> Sub msg
 
 
+port config : (RoomConfig -> msg) -> Sub msg
+
+
 port sendMeta : { title : String, description : String } -> Cmd msg
 
 
@@ -26,6 +31,9 @@ port castVote : String -> Cmd msg
 
 
 port clearVote : String -> Cmd msg
+
+
+port setConfig : RoomConfig -> Cmd msg
 
 
 port kick : String -> Cmd msg
